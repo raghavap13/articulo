@@ -1,184 +1,227 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { Volume2, Play, CheckCircle, RotateCcw } from "lucide-react";
+import React, { useState } from "react";
+import Link from "next/link";
+import {
+  Activity,
+  Mic,
+  Volume2,
+  Stethoscope,
+  User,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle,
+  Sparkles,
+  BookOpen,
+} from "lucide-react";
+import ToneDiscrimination from "@/components/ToneDiscrimination";
+import DdkCoach from "@/components/DdkCoach";
+import MptCoach from "@/components/MptCoach";
+import AlphabetCoach from "@/components/AlphabetCoach";
+import ArticuloLogo from "@/components/ArticuloLogo";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"hearing" | "ddk">("hearing");
-
-  // Auditory Discrimination State
-  const [toneFeedback, setToneFeedback] = useState<string | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-
-  // DDK Rate Coach State
-  const [ddkCount, setDdkCount] = useState<number>(0);
-  const [ddkActive, setDdkActive] = useState<boolean>(false);
-  const [ddkTimer, setDdkTimer] = useState<number>(5);
-
-  const playPureTone = (frequency: number) => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    const ctx = audioCtxRef.current;
-    if (ctx.state === "suspended") ctx.resume();
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(frequency, ctx.currentTime);
-
-    // Smooth gain curve to prevent clicks
-    gain.gain.setValueAtTime(0.001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start();
-    osc.stop(ctx.currentTime + 0.8);
-  };
-
-  // DDK Timer Logic
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (ddkActive && ddkTimer > 0) {
-      interval = setInterval(() => {
-        setDdkTimer((prev) => prev - 1);
-      }, 1000);
-    } else if (ddkTimer === 0 && ddkActive) {
-      setDdkActive(false);
-    }
-    return () => clearInterval(interval);
-  }, [ddkActive, ddkTimer]);
-
-  const startDDK = () => {
-    setDdkCount(0);
-    setDdkTimer(5);
-    setDdkActive(true);
-  };
+  const [demoExercise, setDemoExercise] = useState<"alphabet" | "mpt" | "ddk" | "tone">("alphabet");
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 p-6 md:p-12 font-sans">
-      <header className="max-w-3xl mx-auto mb-10 text-center">
-        <h1 className="text-4xl font-extrabold text-sky-700 tracking-tight">Articulo</h1>
-        <p className="text-slate-600 mt-2 text-lg">Home Speech & Auditory Rehabilitation</p>
-      </header>
-
-      {/* Navigation Tabs */}
-      <div className="max-w-xl mx-auto flex rounded-xl bg-slate-200 p-1 mb-8">
-        <button
-          onClick={() => setActiveTab("hearing")}
-          className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition ${
-            activeTab === "hearing" ? "bg-white text-sky-700 shadow" : "text-slate-600"
-          }`}
-        >
-          1. Tone Discrimination
-        </button>
-        <button
-          onClick={() => setActiveTab("ddk")}
-          className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition ${
-            activeTab === "ddk" ? "bg-white text-sky-700 shadow" : "text-slate-600"
-          }`}
-        >
-          2. DDK Motor Pacing
-        </button>
-      </div>
-
-      {/* Module 1: Tone Discrimination */}
-      {activeTab === "hearing" && (
-        <div className="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-          <h2 className="text-xl font-bold text-slate-800 mb-2">Auditory Pitch Match</h2>
-          <p className="text-sm text-slate-600 mb-6">
-            Listen to both tones below. Identify which frequency matches the standard speech baseline (500 Hz).
-          </p>
-
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <button
-              onClick={() => {
-                playPureTone(500);
-                setToneFeedback("Correct! 500 Hz is in the primary speech frequency range.");
-              }}
-              className="flex flex-col items-center justify-center p-6 bg-sky-50 border border-sky-200 rounded-xl hover:bg-sky-100 transition active:scale-95"
-            >
-              <Volume2 className="w-8 h-8 text-sky-600 mb-2" />
-              <span className="font-semibold text-sky-900">Tone A</span>
-            </button>
-
-            <button
-              onClick={() => {
-                playPureTone(1000);
-                setToneFeedback("Incorrect. That is a 1000 Hz tone (higher octave).");
-              }}
-              className="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition active:scale-95"
-            >
-              <Volume2 className="w-8 h-8 text-slate-600 mb-2" />
-              <span className="font-semibold text-slate-800">Tone B</span>
-            </button>
-          </div>
-
-          {toneFeedback && (
-            <div className="p-4 rounded-xl bg-slate-100 text-sm font-medium text-slate-800 border border-slate-200">
-              {toneFeedback}
+    <div className="flex flex-col min-h-screen bg-white">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-white pt-12 pb-20 lg:pt-18 lg:pb-28 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto">
+            {/* Centered Brand Logo */}
+            <div className="mb-8 flex justify-center">
+              <ArticuloLogo variant="full" size="lg" />
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Module 2: Diadochokinetic Rate Coach */}
-      {activeTab === "ddk" && (
-        <div className="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center">
-          <h2 className="text-xl font-bold text-slate-800 mb-2">DDK Speed & Articulation</h2>
-          <p className="text-sm text-slate-600 mb-6">
-            Say <strong>"PA-TA-KA"</strong> rapidly. Tap the button on each cycle during the 5-second window.
-          </p>
-
-          <div className="flex justify-center items-center gap-6 mb-8">
-            <div className="text-center">
-              <span className="block text-3xl font-extrabold text-sky-700">{ddkTimer}s</span>
-              <span className="text-xs uppercase font-semibold text-slate-400">Time Left</span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#0E2453]/5 border border-[#0E2453]/15 text-[#0E2453] text-xs font-bold tracking-wide uppercase mb-6 shadow-2xs">
+              <Sparkles className="w-3.5 h-3.5 text-[#33B0AA]" />
+              Digital Speech & Auditory Rehabilitation Platform
             </div>
-            <div className="text-center">
-              <span className="block text-3xl font-extrabold text-sky-700">{ddkCount}</span>
-              <span className="text-xs uppercase font-semibold text-slate-400">Repetitions</span>
-            </div>
-          </div>
 
-          {!ddkActive && ddkTimer === 5 && (
-            <button
-              onClick={startDDK}
-              className="w-full py-4 bg-sky-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-sky-700 transition"
-            >
-              <Play className="w-5 h-5 fill-current" /> Start Exercise
-            </button>
-          )}
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#0E2453] tracking-tight leading-tight">
+              Clinical Voice Therapy, <br className="hidden sm:inline" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#33B0AA] via-[#3980BE] to-[#DC8357]">
+                Prescribed & Tracked at Home
+              </span>
+            </h1>
 
-          {ddkActive && (
-            <button
-              onClick={() => setDdkCount((c) => c + 1)}
-              className="w-full py-8 bg-amber-500 text-white text-2xl font-black rounded-xl hover:bg-amber-600 active:scale-95 transition shadow-lg"
-            >
-              TAP ("PA-TA-KA")
-            </button>
-          )}
+            <p className="mt-5 text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
+              Articulo empowers speech-language pathologists (SLPs) and patients with real-time acoustic
+              biofeedback, custom clinical prescriptions, and objective vocal tracking.
+            </p>
 
-          {!ddkActive && ddkTimer === 0 && (
-            <div className="space-y-4">
-              <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl">
-                <CheckCircle className="w-6 h-6 mx-auto mb-1 text-emerald-600" />
-                <p className="font-semibold">Complete! Rate: {(ddkCount / 5).toFixed(1)} reps/sec</p>
-              </div>
-              <button
-                onClick={startDDK}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-900"
+            {/* Dual Portal CTA Buttons */}
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                href="/patient"
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#0E2453] hover:bg-[#163678] text-white font-extrabold text-sm shadow-xl shadow-[#0E2453]/25 transition-all flex items-center justify-center gap-2.5 group"
               >
-                <RotateCcw className="w-4 h-4" /> Try Again
+                <User className="w-4 h-4 text-[#33B0AA]" />
+                <span>Launch Patient Portal</span>
+                <ArrowRight className="w-4 h-4 text-[#FD903B] group-hover:translate-x-1 transition-transform" />
+              </Link>
+
+              <Link
+                href="/therapist"
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white hover:bg-slate-50 text-[#0E2453] font-extrabold text-sm border-2 border-slate-200 hover:border-[#3980BE] shadow-sm transition-all flex items-center justify-center gap-2.5"
+              >
+                <Stethoscope className="w-4 h-4 text-[#3980BE]" />
+                <span>Clinician Dashboard</span>
+              </Link>
+            </div>
+
+            {/* Verification & Trust Badges */}
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 font-bold">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-[#33B0AA]" /> Web Audio Biofeedback
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle className="w-4 h-4 text-[#3980BE]" /> SLP Prescriptions
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Activity className="w-4 h-4 text-[#DC8357]" /> Diadochokinetic SMR/AMR
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Connected Care Flow with Soundwave Color Palette */}
+      <section className="py-20 bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-xs uppercase font-extrabold tracking-widest text-[#3980BE]">
+              The Connected Care Workflow
+            </h2>
+            <p className="text-3xl font-black text-[#0E2453] mt-2">
+              How Articulo Coordinates Voice Rehabilitation
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-slate-50/80 p-8 rounded-3xl border border-slate-200/80 relative hover:border-[#33B0AA]/50 transition-all hover:shadow-md">
+              <div className="w-12 h-12 rounded-2xl bg-[#33B0AA]/15 text-[#33B0AA] font-black text-xl flex items-center justify-center mb-6 border border-[#33B0AA]/30">
+                1
+              </div>
+              <h3 className="text-lg font-bold text-[#0E2453] mb-2">Therapist Prescribes</h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                The clinician selects targeted motor speech and vocal exercises, customized goals
+                (e.g., target 15s MPT, 4.0 reps/sec), frequency, and clinical notes.
+              </p>
+            </div>
+
+            <div className="bg-slate-50/80 p-8 rounded-3xl border border-slate-200/80 relative hover:border-[#3980BE]/50 transition-all hover:shadow-md">
+              <div className="w-12 h-12 rounded-2xl bg-[#3980BE]/15 text-[#3980BE] font-black text-xl flex items-center justify-center mb-6 border border-[#3980BE]/30">
+                2
+              </div>
+              <h3 className="text-lg font-bold text-[#0E2453] mb-2">Patient Practices</h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                The patient logs into their portal to view today’s queue. Real-time microphone acoustic
+                analysis and visual timers guide precise phonation at home.
+              </p>
+            </div>
+
+            <div className="bg-slate-50/80 p-8 rounded-3xl border border-slate-200/80 relative hover:border-[#DC8357]/50 transition-all hover:shadow-md">
+              <div className="w-12 h-12 rounded-2xl bg-[#DC8357]/15 text-[#DC8357] font-black text-xl flex items-center justify-center mb-6 border border-[#DC8357]/30">
+                3
+              </div>
+              <h3 className="text-lg font-bold text-[#0E2453] mb-2">Progress Telemetry</h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Repetition rates, sustained phonation durations, and daily adherence streaks are
+                automatically logged and visible to the treating therapist.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Clinical Exercise Sandbox */}
+      <section className="py-20 bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <h2 className="text-xs uppercase font-extrabold tracking-widest text-[#3980BE]">
+              Interactive Clinical Modules
+            </h2>
+            <p className="text-3xl font-black text-[#0E2453] mt-2">
+              Test Articulo’s Core Drills
+            </p>
+            <p className="text-xs sm:text-sm text-slate-600 mt-2">
+              Try out the acoustic biofeedback engine directly in your browser.
+            </p>
+
+            {/* Exercise Switcher Tabs */}
+            <div className="inline-flex flex-wrap justify-center rounded-2xl bg-slate-200/80 p-1.5 mt-6 gap-1.5 shadow-2xs">
+              <button
+                onClick={() => setDemoExercise("alphabet")}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${
+                  demoExercise === "alphabet"
+                    ? "bg-[#0E2453] text-white shadow-sm"
+                    : "text-slate-600 hover:text-[#0E2453]"
+                }`}
+              >
+                <BookOpen className="w-4 h-4 text-[#DC8357]" /> Alphabet A–Z
+              </button>
+              <button
+                onClick={() => setDemoExercise("mpt")}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${
+                  demoExercise === "mpt"
+                    ? "bg-[#0E2453] text-white shadow-sm"
+                    : "text-slate-600 hover:text-[#0E2453]"
+                }`}
+              >
+                <Mic className="w-4 h-4 text-[#33B0AA]" /> MPT Phonation
+              </button>
+              <button
+                onClick={() => setDemoExercise("ddk")}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${
+                  demoExercise === "ddk"
+                    ? "bg-[#0E2453] text-white shadow-sm"
+                    : "text-slate-600 hover:text-[#0E2453]"
+                }`}
+              >
+                <Activity className="w-4 h-4 text-[#FD903B]" /> DDK Motor Pacing
+              </button>
+              <button
+                onClick={() => setDemoExercise("tone")}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${
+                  demoExercise === "tone"
+                    ? "bg-[#0E2453] text-white shadow-sm"
+                    : "text-slate-600 hover:text-[#0E2453]"
+                }`}
+              >
+                <Volume2 className="w-4 h-4 text-[#3980BE]" /> Pitch Match
               </button>
             </div>
-          )}
+          </div>
+
+          {/* Active Interactive Component */}
+          <div className="mt-8">
+            {demoExercise === "alphabet" && <AlphabetCoach />}
+            {demoExercise === "mpt" && <MptCoach />}
+            {demoExercise === "ddk" && <DdkCoach />}
+            {demoExercise === "tone" && <ToneDiscrimination />}
+          </div>
         </div>
-      )}
-    </main>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-white py-12 border-t border-slate-200 text-center text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <ArticuloLogo variant="horizontal" size="sm" />
+          <div className="flex gap-6 font-bold">
+            <Link href="/patient" className="text-slate-600 hover:text-[#0E2453] transition">
+              Patient Portal
+            </Link>
+            <Link href="/therapist" className="text-slate-600 hover:text-[#0E2453] transition">
+              Therapist Portal
+            </Link>
+          </div>
+          <span className="text-[11px] text-slate-400">
+            © 2026 Articulo Speech and Hearing. All rights reserved.
+          </span>
+        </div>
+      </footer>
+    </div>
   );
 }
