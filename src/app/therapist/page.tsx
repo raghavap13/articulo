@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import {
   Stethoscope,
   Users,
@@ -19,19 +20,25 @@ import {
   Play,
   Square,
   Headphones,
+  Lock,
+  ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 import {
   getStoredPatients,
   setActivePatientId,
   addPrescription,
   removePrescription,
+  getAuthSession,
+  loginAsTherapist,
 } from "@/lib/store";
-import { Patient, ExerciseType } from "@/lib/types";
+import { Patient, ExerciseType, AuthSession } from "@/lib/types";
 import { SoundwaveIcon } from "@/components/ArticuloLogo";
 import { ALPHABET_DATA } from "@/components/AlphabetCoach";
 
 export default function TherapistPortal() {
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [session, setSession] = useState<AuthSession | null>(null);
   const [selectedPatientId, setSelectedPatientId] = useState<string>("p1");
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [notification, setNotification] = useState<string | null>(null);
@@ -52,6 +59,7 @@ export default function TherapistPortal() {
     const update = () => {
       const all = getStoredPatients();
       setPatients(all);
+      setSession(getAuthSession());
     };
     update();
     window.addEventListener("articulo-storage-update", update);
@@ -182,6 +190,60 @@ export default function TherapistPortal() {
         return <Activity className="w-4 h-4 text-[#3980BE]" />;
     }
   };
+
+  if (!session || session.role !== "therapist") {
+    return (
+      <div className="flex-1 bg-white py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="max-w-md w-full text-center bg-white rounded-3xl border border-slate-200 p-8 shadow-xl">
+          <div className="w-14 h-14 rounded-2xl bg-[#3980BE]/15 text-[#3980BE] mx-auto flex items-center justify-center mb-4">
+            <Lock className="w-7 h-7" />
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-extrabold uppercase tracking-wider mb-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#3980BE]" /> SLP License Verification
+          </div>
+          <h2 className="text-2xl font-black text-[#0E2453]">Clinician Login Required</h2>
+          <p className="text-xs text-slate-500 mt-2 mb-6 leading-relaxed">
+            Please sign in with your speech-language pathology clinic credentials to manage patient rosters, assign acoustic prescriptions, and listen to patient recordings.
+          </p>
+
+          <div className="space-y-3 mb-6">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block text-left">
+              Quick 1-Click Clinician Sign-In:
+            </span>
+            <button
+              type="button"
+              onClick={() => loginAsTherapist("rachel.vance@clinic.articulo.org", "Dr. Rachel Vance, CCC-SLP")}
+              className="w-full p-4 rounded-2xl border border-[#3980BE]/30 bg-[#3980BE]/10 hover:bg-[#3980BE]/20 transition flex items-center justify-between text-left group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#0E2453] text-[#33B0AA] flex items-center justify-center shrink-0">
+                  <Stethoscope className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="font-black text-[#0E2453] text-xs block group-hover:text-[#3980BE]">
+                    Dr. Rachel Vance, CCC-SLP
+                  </span>
+                  <span className="text-[10px] text-slate-600 block">
+                    Clinical Director • License #SLP-94820
+                  </span>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#3980BE] group-hover:translate-x-0.5 transition-all" />
+            </button>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-center">
+            <Link
+              href="/login?role=therapist"
+              className="text-xs font-bold text-[#3980BE] hover:underline flex items-center gap-1"
+            >
+              Open Full Clinician Login Form <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">

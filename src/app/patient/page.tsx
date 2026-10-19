@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   CheckCircle,
   Clock,
@@ -13,9 +14,11 @@ import {
   Mic,
   Volume2,
   BookOpen,
+  Lock,
+  ArrowRight,
 } from "lucide-react";
-import { getActivePatient, completePrescription } from "@/lib/store";
-import { Patient, Prescription } from "@/lib/types";
+import { getActivePatient, completePrescription, getAuthSession, loginAsPatient, getStoredPatients } from "@/lib/store";
+import { Patient, Prescription, AuthSession } from "@/lib/types";
 import ToneDiscrimination from "@/components/ToneDiscrimination";
 import DdkCoach from "@/components/DdkCoach";
 import MptCoach from "@/components/MptCoach";
@@ -24,17 +27,78 @@ import { SoundwaveIcon } from "@/components/ArticuloLogo";
 
 export default function PatientPortal() {
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [allPatients, setAllPatients] = useState<Patient[]>([]);
   const [activePrescription, setActivePrescription] = useState<Prescription | null>(null);
   const [showCompletionBanner, setShowCompletionBanner] = useState<string | null>(null);
 
   useEffect(() => {
     const load = () => {
       setPatient(getActivePatient());
+      setSession(getAuthSession());
+      setAllPatients(getStoredPatients());
     };
     load();
     window.addEventListener("articulo-storage-update", load);
     return () => window.removeEventListener("articulo-storage-update", load);
   }, []);
+
+  // If not logged in as a patient, show authentication gate
+  if (!session || session.role !== "patient") {
+    return (
+      <div className="flex-1 bg-white py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="max-w-md w-full text-center bg-white rounded-3xl border border-slate-200 p-8 shadow-xl">
+          <div className="w-14 h-14 rounded-2xl bg-[#33B0AA]/10 text-[#33B0AA] mx-auto flex items-center justify-center mb-4">
+            <Lock className="w-7 h-7" />
+          </div>
+          <h2 className="text-2xl font-black text-[#0E2453]">Patient Sign-In Required</h2>
+          <p className="text-xs text-slate-500 mt-2 mb-6 leading-relaxed">
+            Please sign in to view your prescribed therapy queue, track your streak, and access interactive biofeedback drills.
+          </p>
+
+          <div className="space-y-3 mb-6">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block text-left">
+              Quick 1-Click Patient Sign-In:
+            </span>
+            {allPatients.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => loginAsPatient(p.id)}
+                className="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-[#33B0AA]/10 hover:border-[#33B0AA]/40 transition flex items-center justify-between text-left group"
+              >
+                <div className="flex items-center gap-3">
+                  <img
+                    src={p.avatar}
+                    alt={p.name}
+                    className="w-10 h-10 rounded-xl object-cover border border-slate-200"
+                  />
+                  <div>
+                    <span className="font-bold text-[#0E2453] text-xs block group-hover:text-[#33B0AA]">
+                      {p.name}
+                    </span>
+                    <span className="text-[10px] text-slate-500 block truncate max-w-[180px]">
+                      {p.diagnosis.split("&")[0]}
+                    </span>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-[#33B0AA] group-hover:translate-x-0.5 transition-all" />
+              </button>
+            ))}
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-center">
+            <Link
+              href="/login?role=patient"
+              className="text-xs font-bold text-[#3980BE] hover:underline flex items-center gap-1"
+            >
+              Open Full Patient Login Form <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!patient) {
     return (

@@ -1,9 +1,10 @@
 "use client";
 
-import { Patient, Prescription, ExerciseType, LetterRecording } from "./types";
+import { Patient, Prescription, ExerciseType, LetterRecording, AuthSession } from "./types";
 
 const STORAGE_KEY = "articulo_patients_v2";
 const ACTIVE_PATIENT_KEY = "articulo_active_patient_id";
+const AUTH_SESSION_KEY = "articulo_auth_session_v1";
 
 // Helper to generate a lightweight playable WAV data URL for initial demo seed / fallback
 export function generateToneWavDataUrl(frequency = 440, durationSeconds = 1.2): string {
@@ -61,6 +62,8 @@ export const INITIAL_PATIENTS: Patient[] = [
   {
     id: "p1",
     name: "Elena Rostova",
+    email: "elena.rostova@patient.articulo.org",
+    accessCode: "ELENA-2026",
     age: 58,
     diagnosis: "Post-Stroke Flaccid Dysarthria & Breathiness",
     avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200",
@@ -142,6 +145,8 @@ export const INITIAL_PATIENTS: Patient[] = [
   {
     id: "p2",
     name: "Marcus Vance",
+    email: "marcus.vance@patient.articulo.org",
+    accessCode: "MARCUS-2026",
     age: 67,
     diagnosis: "Parkinson's Disease (Hypophonia & Rate Festination)",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
@@ -262,6 +267,60 @@ export function getActivePatient(): Patient {
 export function setActivePatientId(id: string): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(ACTIVE_PATIENT_KEY, id);
+  window.dispatchEvent(new Event("articulo-storage-update"));
+}
+
+export function getAuthSession(): AuthSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(AUTH_SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as AuthSession;
+  } catch {
+    return null;
+  }
+}
+
+export function loginAsPatient(patientId: string): AuthSession {
+  const patients = getStoredPatients();
+  const patient = patients.find((p) => p.id === patientId) || patients[0];
+  const session: AuthSession = {
+    role: "patient",
+    userId: patient.id,
+    name: patient.name,
+    email: patient.email || `${patient.name.toLowerCase().replace(/\s+/g, ".")}@patient.articulo.org`,
+    subtitle: patient.diagnosis,
+    avatar: patient.avatar,
+  };
+  if (typeof window !== "undefined") {
+    localStorage.setItem(ACTIVE_PATIENT_KEY, patient.id);
+    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+    window.dispatchEvent(new Event("articulo-storage-update"));
+  }
+  return session;
+}
+
+export function loginAsTherapist(
+  email = "rachel.vance@clinic.articulo.org",
+  name = "Dr. Rachel Vance, CCC-SLP"
+): AuthSession {
+  const session: AuthSession = {
+    role: "therapist",
+    userId: "t1",
+    name,
+    email,
+    subtitle: "Clinical Director • Outpatient Neurorehabilitation",
+  };
+  if (typeof window !== "undefined") {
+    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+    window.dispatchEvent(new Event("articulo-storage-update"));
+  }
+  return session;
+}
+
+export function logoutSession(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(AUTH_SESSION_KEY);
   window.dispatchEvent(new Event("articulo-storage-update"));
 }
 

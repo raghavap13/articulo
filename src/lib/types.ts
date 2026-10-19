@@ -30,9 +30,22 @@ export interface SessionHistory {
   audioDataUrl?: string;
 }
 
+export type UserRole = "patient" | "therapist";
+
+export interface AuthSession {
+  role: UserRole;
+  userId: string;
+  name: string;
+  email: string;
+  subtitle: string;
+  avatar?: string;
+}
+
 export interface Patient {
   id: string;
   name: string;
+  email?: string;
+  accessCode?: string;
   age: number;
   diagnosis: string;
   avatar: string;

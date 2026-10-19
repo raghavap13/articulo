@@ -54,20 +54,20 @@ export default function Home() {
             {/* Dual Portal CTA Buttons */}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/patient"
+                href="/login?role=patient"
                 className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#0E2453] hover:bg-[#163678] text-white font-extrabold text-sm shadow-xl shadow-[#0E2453]/25 transition-all flex items-center justify-center gap-2.5 group"
               >
                 <User className="w-4 h-4 text-[#33B0AA]" />
-                <span>Launch Patient Portal</span>
+                <span>Patient Portal & Login</span>
                 <ArrowRight className="w-4 h-4 text-[#FD903B] group-hover:translate-x-1 transition-transform" />
               </Link>
 
               <Link
-                href="/therapist"
+                href="/login?role=therapist"
                 className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white hover:bg-slate-50 text-[#0E2453] font-extrabold text-sm border-2 border-slate-200 hover:border-[#3980BE] shadow-sm transition-all flex items-center justify-center gap-2.5"
               >
                 <Stethoscope className="w-4 h-4 text-[#3980BE]" />
-                <span>Clinician Dashboard</span>
+                <span>Therapist Portal & Login</span>
               </Link>
             </div>
 
